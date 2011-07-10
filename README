@@ -1,0 +1,111 @@
+Simple Json-RPC server/client for Nette apps (alternative of XML-RPC).
+
+
+
+** Description **
+Call remote methods between Nette aps, forexample for share users (multilogin) on some our nette applications.
+It transfer exception from server to client, if in method on server is throwed exception, it's transfer to the 
+client-side and call it here.
+
+
+** Features **
+
+SERVER
+- event before call 
+- event after success call
+- event after exception call
+- magic setter for callback
+- interface for security of access
+- transfer exception from server (if exist on client)
+- all callbacks can be set with:
+	- closures: 
+		$server->checkEmail = function($email) { return $email . " - test"; };
+	- array which call method of instance: 
+		$server->checkName = array($this, "checkName");
+	- string which represent static method: 
+		$server->webalize = "\Nette\Utils\Strings::webalize";
+
+CLIENT
+- get list of methods from server 
+- show panel with list of methods with annotation in debugbar
+
+
+
+** Example **
+
+SERVER 
+--------------------
+
+final class JsonServerPresenter extends BasePresenter
+{ 
+
+	public function actionDefault()
+	{
+		// Get post data (same like $_POST)
+		$post = $this->getRequest()->getPost();
+
+		$server = new \JsonRpc\JsonRpcServer($post);  // Start of server		
+		$server->onBeforeCall = function($method, $args) { ... };   // Set callback before call some methods
+		$server->onSuccessCall = function($method, $args, $return) { ... };   // Set callback on success call
+		$server->onExceptionCall = function($method, $args, $exception) { ... };   // Set call on exception call
+		
+		// Now we can set all available methods
+		$server->checkEmail = function($email) { return $email . " - test"; };  // Like closure
+		$server->checkName = array($this, "checkName");   // Like array($instance, $method_name)
+		$server->webalize = "\Nette\Utils\Strings::webalize";  // Like string for static method call
+		
+		// On the end execute the server
+		$output = $server->execute();		
+		
+		// Send output to the browser
+		$httpResponse = $this->context->httpResponse;
+		$httpResponse->setContentType('text/plain', 'UTF-8');
+		$this->sendResponse(new \Nette\Application\Responses\TextResponse($output));		
+	}
+	
+	/** Terminate (restrict template a dissable debugbar) */
+	public function renderDefault()
+	{
+		\Nette\Diagnostics\Debugger::$bar = false;
+		$this->terminate();		
+	}
+
+	/** Example */
+	public function checkName($name)
+	{
+		if ($name == "test") 
+			throw new \BadMethodCallException("Test of return exception!");		
+		return ($name == "admin") ? true : false;
+	}
+
+
+}
+
+
+
+CLIENT 
+--------------------
+
+final class JsonClientPresenter extends BasePresenter
+{ 
+
+	public function actionDefault()
+	{
+		// Inicialize client		
+		$client = new \JsonRpc\JsonRpcClient("http://www.example.com/json-server/"); 
+		$client->getListOfMethod(); // Return list of methods and register JsonRpc panel
+		
+		// Call remote methods
+		var_dump($client->checkName("admin"));
+		var_dump($client->checkName("test"));  // Throw exception \BadMethodCallException
+		var_dump($client->checkEmail("test@example.com"));
+		var_dump($client->webalize("testovací řetězec"));		
+	}
+
+
+}
+
+
+
+
+
