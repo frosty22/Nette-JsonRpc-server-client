@@ -116,7 +116,7 @@ class JsonRpcClient extends JsonRpc {
 		$output = curl_exec($ch);
 		$info = curl_getinfo($ch);
 		curl_close($ch);
-		var_dump($output);
+		
 		if (isset($info["http_code"]) && ($info["http_code"] == 500))
 			throw new JsonRpcException("RPC server error");
 	
