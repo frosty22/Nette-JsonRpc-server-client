@@ -1,0 +1,41 @@
+<style>
+	#nette-debug-panel-JsonRpc-JsonRpcPanel .q {
+		padding-top: 6px !important;
+	}
+	#nette-debug-panel-JsonRpc-JsonRpcPanel strong {
+		font-weight: bold;
+	}
+</style>
+<h1>List of methods on Rpc server</h1>
+<div class="nette-inner">
+	<table>
+		<tr>
+			<th>Method syntax</th>
+			<th>Annotations</th>
+		</tr>
+		{if !empty($methods)}	
+			{foreach $methods as $item => $method}
+			<tr>
+				<td class="q"><code>{$item}({foreach $method["parameters"] as $parameter}${$parameter["name"]}{sep},&nbsp;{/sep}{/foreach})</code></td>
+				<td>
+				{ifset $method["annotation"]}
+					{foreach $method["annotation"] as $name => $arr}
+						{foreach $arr as $item}
+							{if $name == "description"}
+								<p>{$item}</p>
+							{else}
+								<p><strong>@{$name}</strong> {$item}</p>
+							{/if}
+						{/foreach}
+					{/foreach}	
+				{else}
+					none
+				{/ifset}
+				</td>
+			</tr>
+			{/foreach} 
+		{else}
+			<tr><td colspan="2">Failed to get a list of all methods</td></tr>
+		{/if}
+	</table>
+</div>
